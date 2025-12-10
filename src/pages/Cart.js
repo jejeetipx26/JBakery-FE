@@ -1,5 +1,6 @@
 import { jwtDecode } from "jwt-decode";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import UserNavbar from "../components/UserNavbar";
 
@@ -30,7 +31,7 @@ const Cart = () => {
         const cart = await res.json();
         setCartItems(cart);
     };
-    
+
     console.log("Cart data:", cartItems);
     const calculateTotal = () => {
         const sum = cartItems.reduce(
@@ -41,12 +42,16 @@ const Cart = () => {
     };
 
     const handleRemoveItem = async (id) => {
-        const res = await fetch(`http://localhost:3001/api/cart/${user.id}/${id}`, {
-            method: "DELETE",
-        });
+        const res = await fetch(
+            `http://localhost:3001/api/cart/${user.id}/${id}`,
+            {
+                method: "DELETE",
+            }
+        );
         const data = await res.json();
         const newCart = cartItems.filter((item) => item.id !== id);
         setCartItems(newCart);
+        toast.success("Item dihapus");
     };
 
     const handleUpdateQuantity = async (id, newQuantity) => {
@@ -55,13 +60,16 @@ const Cart = () => {
             return;
         }
 
-        const res = await fetch(`http://localhost:3001/api/cart/${user.id}/${id}`, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ quantity: newQuantity }),
-        });
+        const res = await fetch(
+            `http://localhost:3001/api/cart/${user.id}/${id}`,
+            {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ quantity: newQuantity }),
+            }
+        );
 
         const updatedCart = cartItems.map((item) =>
             item.id === id ? { ...item, quantity: newQuantity } : item
@@ -71,39 +79,62 @@ const Cart = () => {
 
     const handleClearCart = () => {
         const clear = async () => {
-            const res = await fetch(`http://localhost:3001/api/cart?id=${user.id}`, {
-                method: "DELETE",
-            });
+            const res = await fetch(
+                `http://localhost:3001/api/cart?id=${user.id}`,
+                {
+                    method: "DELETE",
+                }
+            );
             setCartItems([]);
-        }
+        };
         clear();
     };
 
     const handleCheckout = async () => {
-        const res = await fetch(`http://localhost:3001/api/order/create?id=${user.id}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                items: cartItems.map(item => ({
-                    produkId: item.produkId,
-                    nama_produk: item.produk.nama_produk,
-                    harga: item.produk.harga,
-                    quantity: item.quantity
-                }))
-            })
-        });
-        const data = await res.json();
-        if (res.ok) {
-            alert("Order berhasil dibuat!");
-            setCartItems([]);
-            navigate("/payment", {state: {
-                total: total,
-                cartItems: cartItems,
-            }});
-        } else {
-            alert(`Error: ${data.error}`);
+        const toastId = toast.loading("Memproses pesanan...");
+
+        try {
+            const res = await fetch(
+                `http://localhost:3001/api/order/create?id=${user.id}`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        items: cartItems.map((item) => ({
+                            produkId: item.produkId,
+                            nama_produk: item.produk.nama_produk,
+                            harga: item.produk.harga,
+                            quantity: item.quantity,
+                        })),
+                    }),
+                }
+            );
+
+            const data = await res.json();
+
+            if (res.ok) {
+                // Update loading jadi sukses
+                toast.success("Order berhasil dibuat!", { id: toastId });
+
+                setCartItems([]);
+
+                // Beri jeda sedikit agar user sempat baca notif sebelum pindah halaman
+                setTimeout(() => {
+                    navigate("/payment", {
+                        state: {
+                            total: total,
+                            cartItems: cartItems,
+                        },
+                    });
+                }, 1000);
+            } else {
+                // Update loading jadi error
+                toast.error(`Gagal: ${data.error}`, { id: toastId });
+            }
+        } catch (error) {
+            toast.error("Terjadi kesalahan koneksi", { id: toastId });
         }
     };
 
@@ -148,8 +179,12 @@ const Cart = () => {
                                         <div className="w-32 h-32 flex-shrink-0">
                                             {item.produk.foto_produk ? (
                                                 <img
-                                                    src={item.produk.foto_produk}
-                                                    alt={item.produk.nama_produk}
+                                                    src={
+                                                        item.produk.foto_produk
+                                                    }
+                                                    alt={
+                                                        item.produk.nama_produk
+                                                    }
                                                     className="w-full h-full object-cover rounded-xl"
                                                 />
                                             ) : (
@@ -165,7 +200,8 @@ const Cart = () => {
                                                 {item.produk.nama_produk}
                                             </h3>
                                             <p className="text-amber-600 font-bold text-lg mt-2">
-                                                Rp{item.produk.harga?.toLocaleString()}
+                                                Rp
+                                                {item.produk.harga?.toLocaleString()}
                                             </p>
 
                                             {/* Quantity Controls */}
@@ -216,7 +252,8 @@ const Cart = () => {
                                             <p className="text-2xl font-bold text-amber-600">
                                                 Rp
                                                 {(
-                                                    item.produk.harga * item.quantity
+                                                    item.produk.harga *
+                                                    item.quantity
                                                 ).toLocaleString()}
                                             </p>
                                         </div>
