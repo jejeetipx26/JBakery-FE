@@ -52,7 +52,7 @@ const UserNavbar = () => {
                         className="flex items-center gap-2 cursor-pointer hover:opacity-80"
                         onClick={() => navigate("/home")}
                     >
-                        <img src="/logo.png" alt="Logo" className="w-8 h-8" />
+                        <img src="/logo.png" alt="Logo" className="h-8 w-auto rounded-xl" />
                         <span className="text-xl font-semibold text-amber-700">JBakery</span>
                     </div>
 
