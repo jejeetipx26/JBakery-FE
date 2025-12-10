@@ -28,7 +28,7 @@ const OrdersPage = () => {
                 console.log(data);
                 setOrders(data);
                 setError(null);
-            }else{
+            } else {
                 setOrders([]);
                 setError("Belum ada pesanan yang dibuat");
             }
@@ -44,7 +44,9 @@ const OrdersPage = () => {
     const handleStatusChange = async (orderId, newStatus) => {
         try {
             const token = localStorage.getItem("token");
-            const res = await fetch(`${BASE_URL}/${orderId}`, {
+
+            // PERBAIKAN DISINI: Tambahkan '/status' di akhir URL sesuai route backend
+            const res = await fetch(`${BASE_URL}/${orderId}/status`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -52,9 +54,14 @@ const OrdersPage = () => {
                 },
                 body: JSON.stringify({ status: newStatus }),
             });
-            if (!res.ok) throw new Error("Gagal update status");
+
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.error || "Gagal update status");
+            }
+
             await fetchOrders();
-            setIsModalOpen(false);
+            setIsModalOpen(false); // Tutup modal setelah sukses
             alert("Status pesanan berhasil diupdate!");
         } catch (err) {
             alert("Error: " + err.message);
