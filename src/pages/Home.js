@@ -238,9 +238,9 @@ const Home = () => {
                                                             : "Habis"}
                                                     </span>
                                                 </div>
-                                                <button className="px-6 py-3 bg-amber-600 text-white font-semibold rounded-full hover:bg-amber-700 transition-colors">
+                                                {<button className="px-6 py-3 bg-amber-600 text-white font-semibold rounded-full hover:bg-amber-700 transition-colors">
                                                     Lihat Detail
-                                                </button>
+                                                </button>}
                                             </div>
                                         </div>
                                     </div>
